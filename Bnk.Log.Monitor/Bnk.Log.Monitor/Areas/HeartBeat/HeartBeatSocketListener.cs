@@ -38,8 +38,14 @@ namespace Bnk.Log.Monitor.Areas.HeartBeat
             m_lastReceiveDateTime = DateTime.Now;
             m_currentReceiveDateTime = DateTime.Now;
 
-            Timer t = new Timer(new TimerCallback(CheckClientCommInterval),
-              null, 15000, 15000);
+            Timer t1 = new Timer(new TimerCallback(CheckClientCommInterval),
+              null, 20000, 20000);
+
+            Timer t2 = new Timer(new TimerCallback(CheckClientCommInterval),
+              null, 40000, 40000);
+
+            Timer t3 = new Timer(new TimerCallback(CheckClientCommInterval),
+              null, 60000, 60000);
 
             while (!m_stopClient)
             {
@@ -55,19 +61,20 @@ namespace Bnk.Log.Monitor.Areas.HeartBeat
                     m_markedForDeletion = true;
                 }
             }
-            t.Change(Timeout.Infinite, Timeout.Infinite);
-            t = null;
+            //t.Change(Timeout.Infinite, Timeout.Infinite);
+            //t = null;
         }
 
             private void ParseReceiveBuffer(byte[] byteBuffer,int size)
             {
- 	                System.Diagnostics.Debug.WriteLine("Parse the Buffer");
+                string alive = System.Text.Encoding.ASCII.GetString(byteBuffer);
+                System.Diagnostics.Debug.WriteLine(alive);
             }
 
         
         private void CheckClientCommInterval(object state)
         {
-            Console.WriteLine("Take care Client die");
+            System.Diagnostics.Debug.WriteLine("Client Communication Interval exceeded");
         }
 
 
