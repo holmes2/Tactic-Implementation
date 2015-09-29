@@ -16,7 +16,10 @@ namespace Bnk.Log.Monitor.Areas.HeartBeat
         public const int WARNING_TIMEOUT = 20;
 
         #region Properties 
-            
+            private int ReceiveMessage()
+        {
+
+        }
 
         #endregion
 
