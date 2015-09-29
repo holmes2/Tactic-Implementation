@@ -28,31 +28,32 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.serviceProcessInstaller1 = new System.ServiceProcess.ServiceProcessInstaller();
+            this.monitorservice = new System.ServiceProcess.ServiceProcessInstaller();
             this.monitorServiceInstaller = new System.ServiceProcess.ServiceInstaller();
             // 
-            // serviceProcessInstaller1
+            // monitorservice
             // 
-            this.serviceProcessInstaller1.Account = System.ServiceProcess.ServiceAccount.LocalSystem;
-            this.serviceProcessInstaller1.Password = null;
-            this.serviceProcessInstaller1.Username = null;
+            this.monitorservice.Account = System.ServiceProcess.ServiceAccount.LocalSystem;
+            this.monitorservice.Password = null;
+            this.monitorservice.Username = null;
             // 
             // monitorServiceInstaller
             // 
+            this.monitorServiceInstaller.Description = "Monitor for Log entries";
             this.monitorServiceInstaller.DisplayName = "monitor Service";
             this.monitorServiceInstaller.ServiceName = "Service1";
             // 
             // ProjectInstaller
             // 
             this.Installers.AddRange(new System.Configuration.Install.Installer[] {
-            this.serviceProcessInstaller1,
+            this.monitorservice,
             this.monitorServiceInstaller});
 
         }
 
         #endregion
 
-        private System.ServiceProcess.ServiceProcessInstaller serviceProcessInstaller1;
+        private System.ServiceProcess.ServiceProcessInstaller monitorservice;
         private System.ServiceProcess.ServiceInstaller monitorServiceInstaller;
     }
 }

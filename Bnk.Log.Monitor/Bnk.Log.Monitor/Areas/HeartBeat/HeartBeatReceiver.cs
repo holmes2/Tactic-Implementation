@@ -27,8 +27,8 @@ namespace Bnk.Log.Monitor.Areas.HeartBeat
         
         TcpListener _hbreceive;
         ArrayList m_socketListenersList;
-        int _port = 3499;
-        string address = "192.168.0.23";
+        int _port = 31001;
+        string address = "127.0.0.1";
         #endregion
 
         #region Constructor
@@ -37,11 +37,15 @@ namespace Bnk.Log.Monitor.Areas.HeartBeat
             try
             {
                 int intAddress = BitConverter.ToInt32(IPAddress.Parse(address).GetAddressBytes(), 0);
-                IPAddress myip = new IPAddress(intAddress);
-                _hbreceive = new TcpListener(myip, _port);
+                IPAddress myip = Dns.GetHostEntry("localhost").AddressList[0];
+                System.Diagnostics.EventLog.WriteEntry("REACH TILL CONSTRUCTOR", "YE");
+                _hbreceive = new TcpListener(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 31001));
+                System.Diagnostics.EventLog.WriteEntry("REACH TILL CONSTRUCTOR 2", "YE");
+
             }
             catch (Exception ex)
             {
+                System.Diagnostics.EventLog.WriteEntry("Please", ex.InnerException.ToString());
                 _hbreceive = null;
                 
             }
@@ -51,6 +55,8 @@ namespace Bnk.Log.Monitor.Areas.HeartBeat
         #region Start the Heart Beat Service on separate thread
         public void StartServer()
         {
+            System.Diagnostics.EventLog.WriteEntry("Start server", "YE");
+
             if (_hbreceive != null)
             {
                 // Create a ArrayList for storing SocketListeners before
@@ -59,8 +65,12 @@ namespace Bnk.Log.Monitor.Areas.HeartBeat
 
                 // Start the Server and start the thread to listen client 
                 // requests.
+                System.Diagnostics.EventLog.WriteEntry("START", "1");
+
                 _hbreceive.Start();
                 Thread _receiveHbThread = new Thread(new ThreadStart(ServerThreadStart));
+                System.Diagnostics.EventLog.WriteEntry("START THREAD", "2");
+
                 _receiveHbThread.Start();
             }
         }
@@ -69,15 +79,20 @@ namespace Bnk.Log.Monitor.Areas.HeartBeat
         #region Server Thread Start
         private void ServerThreadStart()
         {
+            System.Diagnostics.EventLog.WriteEntry("IN THREAD", "1");
+
             Socket ServerSocket = null;
             HeartBeatSocketListener socketListener = null;
             try
             {
                 while (!_hbStop)
                 {
+                    System.Diagnostics.EventLog.WriteEntry("IN THREAD", "2");
+
                     ServerSocket = _hbreceive.AcceptSocket();
 
                     socketListener = new HeartBeatSocketListener(ServerSocket);
+                    System.Diagnostics.EventLog.WriteEntry("IN THREAD", "3");
 
                     lock (m_socketListenersList)
                     {
