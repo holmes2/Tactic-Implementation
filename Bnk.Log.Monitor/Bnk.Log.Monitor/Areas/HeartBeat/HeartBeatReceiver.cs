@@ -24,11 +24,14 @@ namespace Bnk.Log.Monitor.Areas.HeartBeat
         #region Private Global Variables
         
         public bool _hbStop { get; set; }
-        
+        Thread m_purgingThread;
+        Thread _receiveHbThread;
         TcpListener _hbreceive;
         ArrayList m_socketListenersList;
         int _port = 31001;
         string address = "127.0.0.1";
+        public bool m_stopServer;
+        public bool m_stopPurging;
         #endregion
 
         #region Constructor
@@ -68,13 +71,32 @@ namespace Bnk.Log.Monitor.Areas.HeartBeat
                 System.Diagnostics.EventLog.WriteEntry("START", "1");
 
                 _hbreceive.Start();
-                Thread _receiveHbThread = new Thread(new ThreadStart(ServerThreadStart));
+                _receiveHbThread = new Thread(new ThreadStart(ServerThreadStart));
                 System.Diagnostics.EventLog.WriteEntry("START THREAD", "2");
 
                 _receiveHbThread.Start();
+
+                m_purgingThread = new Thread(new ThreadStart(PurgingThreadStart));
+                m_purgingThread.Priority = ThreadPriority.Lowest;
+                m_purgingThread.Start();
+
             }
         }
         #endregion
+
+        #region
+        public void PurgingThreadStart()
+        {
+            foreach (HeartBeatSocketListener item in m_socketListenersList)
+            {
+                   if (item.m_markedForDeletion)
+                   {
+                       item.requestSocket.Close();
+                   }
+            }
+        }
+        #endregion
+
 
         #region Server Thread Start
         private void ServerThreadStart()
@@ -108,5 +130,53 @@ namespace Bnk.Log.Monitor.Areas.HeartBeat
             }
         }
         #endregion
+
+        public void StopServer()
+        {
+            if (_hbreceive != null)
+            {
+                // It is important to Stop the server first before doing
+                // any cleanup. If not so, clients might being added as
+                // server is running, but supporting data structures
+                // (such as m_socketListenersList) are cleared. This might
+                // cause exceptions.
+
+                // Stop the TCP/IP Server.
+                m_stopServer = true;
+                _hbreceive.Stop();
+
+                // Wait for one second for the the thread to stop.
+                _receiveHbThread.Join(1000);
+
+                // If still alive; Get rid of the thread.
+                if (_receiveHbThread.IsAlive)
+                {
+                    _receiveHbThread.Abort();
+                }
+                _receiveHbThread = null;
+
+                m_stopPurging = true;
+                m_purgingThread.Join(1000);
+                if (m_purgingThread.IsAlive)
+                {
+                    m_purgingThread.Abort();
+                }
+                m_purgingThread = null;
+
+                // Free Server Object.
+                _hbreceive = null;
+
+                // Stop All clients.
+                StopAllSocketListers();
+            }
+        }
+
+        public void StopAllSocketListers()
+        {
+            foreach (HeartBeatSocketListener item in m_socketListenersList)
+            {
+                item.requestSocket.Close();
+            }
+        }
     }
 }

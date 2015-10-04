@@ -13,7 +13,7 @@ namespace Bnk.ClientApplication
         static void Main(string[] args)
         {
             TCPClient client = null;
-            client = new TCPClient("Alive");
+            client = new TCPClient("Alive\n");
             
         }
     }

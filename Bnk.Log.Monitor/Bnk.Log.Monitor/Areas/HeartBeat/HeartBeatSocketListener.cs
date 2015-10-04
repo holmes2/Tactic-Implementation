@@ -10,10 +10,10 @@ namespace Bnk.Log.Monitor.Areas.HeartBeat
 {
     class HeartBeatSocketListener
     {
-        Socket requestSocket;
+        public Socket requestSocket;
         Thread clientListenThread;
-        
-
+        bool _received = false;
+        Dictionary<Thread, DateTime> lastreceivedict = new Dictionary<Thread, DateTime>();
         public HeartBeatSocketListener(Socket clientSocket)
         {
             requestSocket = clientSocket;
@@ -23,29 +23,26 @@ namespace Bnk.Log.Monitor.Areas.HeartBeat
         {
             if (requestSocket != null)
             {
-                clientListenThread =
-                  new Thread(new ThreadStart(SocketListenerThreadStart));
+                SocketListenerThreadStart();
+                //clientListenThread =
+                //  new Thread(new ThreadStart(SocketListenerThreadStart));
 
-                clientListenThread.Start();
+                //clientListenThread.Start();
+                //SocketListenerThreadStart();
             }
         }
 
+       
         private void SocketListenerThreadStart()
         {
+
             int size = 0;
             Byte[] byteBuffer = new Byte[1024];
 
-            m_lastReceiveDateTime = DateTime.Now;
-            m_currentReceiveDateTime = DateTime.Now;
+          
+            Timer t = new Timer(new TimerCallback(CheckClientCommInterval),this, 20000, 20000);
+            
 
-            Timer t1 = new Timer(new TimerCallback(CheckClientCommInterval),
-              null, 20000, 20000);
-
-            Timer t2 = new Timer(new TimerCallback(CheckClientCommInterval),
-              null, 40000, 40000);
-
-            Timer t3 = new Timer(new TimerCallback(CheckClientCommInterval),
-              null, 60000, 60000);
 
             while (!m_stopClient)
             {
@@ -54,6 +51,15 @@ namespace Bnk.Log.Monitor.Areas.HeartBeat
                     size = requestSocket.Receive(byteBuffer);
                     m_currentReceiveDateTime = DateTime.Now;
                     ParseReceiveBuffer(byteBuffer, size);
+                    lock (this)
+                    {
+                        m_lastReceiveDateTime = DateTime.Now;
+                        
+                        t.Change(20000, 20000);
+                        m_stopClient = false;
+                        System.Diagnostics.Debug.WriteLine("\tTime:" + m_lastReceiveDateTime);
+                    }
+
                 }
                 catch (SocketException se)
                 {
@@ -61,20 +67,38 @@ namespace Bnk.Log.Monitor.Areas.HeartBeat
                     m_markedForDeletion = true;
                 }
             }
-            //t.Change(Timeout.Infinite, Timeout.Infinite);
-            //t = null;
+            t.Change(Timeout.Infinite, Timeout.Infinite);
+            t = null;
         }
 
-            private void ParseReceiveBuffer(byte[] byteBuffer,int size)
-            {
-                string alive = System.Text.Encoding.ASCII.GetString(byteBuffer);
-                System.Diagnostics.Debug.WriteLine(alive);
-            }
+        private void ParseReceiveBuffer(byte[] byteBuffer, int size)
+        {
+            string alive = System.Text.Encoding.ASCII.GetString(byteBuffer);
+            System.Diagnostics.Debug.WriteLine(alive + "\n");
+        }
 
-        
+
         private void CheckClientCommInterval(object state)
         {
-            System.Diagnostics.Debug.WriteLine("Client Communication Interval exceeded");
+                
+                DateTime currentTime = DateTime.Now;
+                System.Diagnostics.Debug.WriteLine("\tTime:" + m_lastReceiveDateTime + "\t Received Interrupt at:" + currentTime);
+
+                if ((currentTime.Subtract(m_lastReceiveDateTime).TotalSeconds >= 20) && (currentTime.Subtract(m_lastReceiveDateTime).TotalSeconds < 40))
+                {
+                    System.Diagnostics.Debug.WriteLine("Client Communication Interval exceeded\n");
+                }
+                else if (((currentTime.Subtract(m_lastReceiveDateTime).TotalSeconds >= 40) && (currentTime.Subtract(m_lastReceiveDateTime).TotalSeconds < 60)))
+                {
+                    System.Diagnostics.Debug.WriteLine("Warning\n");
+                }
+                else if (((currentTime.Subtract(m_lastReceiveDateTime).TotalSeconds >= 60)))
+                {
+                    System.Diagnostics.Debug.WriteLine("Critical\n");
+                    m_stopClient = true;
+                }
+            
+
         }
 
 

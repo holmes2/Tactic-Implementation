@@ -28,31 +28,13 @@ namespace Bnk.ClientApplication
             Socket clientSocket = new Socket(AddressFamily.InterNetwork,
                 SocketType.Stream, ProtocolType.Tcp);
             clientSocket.Connect(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 31001));
-            
-            // Send the file name.
-            clientSocket.Send(Encoding.ASCII.GetBytes(m_fileName));
 
-            // Receive the length of the filename.
-            //byte[] data = new byte[128];
-            //clientSocket.Receive(data);
-            //int length = BitConverter.ToInt32(data, 0);
+            while (true)
+            {
+                clientSocket.Send(Encoding.ASCII.GetBytes(m_fileName));
+                System.Threading.Thread.Sleep(21000);
 
-            //clientSocket.Send(Encoding.ASCII.GetBytes(m_fileName + ":" +
-            //    "this is a test\r\n"));
-
-            //clientSocket.Send(Encoding.ASCII.GetBytes(m_fileName + ":" +
-            //      "THIS IS "));
-            //clientSocket.Send(Encoding.ASCII.GetBytes("ANOTHRER "));
-            //clientSocket.Send(Encoding.ASCII.GetBytes("TEST."));
-            //clientSocket.Send(Encoding.ASCII.GetBytes("\r\n"));
-            //clientSocket.Send(Encoding.ASCII.GetBytes(m_fileName + ":" +
-            //      "TEST.\r\n" + m_fileName + ":" + "TEST AGAIN.\r\n"));
-            //clientSocket.Send(Encoding.ASCII.GetBytes("[EOF]\r\n"));
-
-            // Get the total length
-            //clientSocket.Receive(data);
-            //length = BitConverter.ToInt32(data, 0);
-            //clientSocket.Close();
+            }
         }
     }
 }
